@@ -1,0 +1,147 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  
+
+  - name: Update and upgrade apt packages
+    become: true
+    apt:
+     update_cache: yes
+   
+  - name: Get APT Key docker
+    shell:
+      cmd: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+     
+  
+  - name: Add the docker repository
+    shell:
+      cmd: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+  - name: 3. Get APT Key
+    shell:
+      cmd: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+      
+
+  - name: add Kubernetes' APT repository
+    apt_repository:
+      repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+      state: present
+      filename: 'kubernetes'
+   
+
+  - name: Update and upgrade apt packages
+    become: true
+    apt:
+     update_cache: yes
+    
+
+  - name: install kubelet --version =1.21.1.00
+    apt:
+      name: kubelet=1.21.1-00
+      state: present
+      update_cache: true
+  
+  - name: install kubeadm --version =1.21.1.00
+    apt:
+      name: kubeadm=1.21.1-00
+      state: present
+      update_cache: true
+
+  - name: install kubectl --version =1.21.1.00
+    apt:
+      name: kubectl=1.21.1-00
+      force: yes
+      state: present
+      update_cache: true
+
+
+  - name: Install docker and its dependecies
+    apt: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - docker-ce 
+      - docker-ce-cli 
+      - containerd.io
+    
+
+  - name: Install packages that allow apt to be used over HTTPS
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common 
+
+  - name: hold the versions 
+    shell:
+      cmd: sudo apt-mark hold docker-ce kubelet kubeadm kubectl
+
+
+  - name: ensure net.bridge.bridge-nf-call-ip6tables is set to 1
+    sysctl:
+      name: net.bridge.bridge-nf-call-ip6tables
+      value: 1
+      state: present
+
+  - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
+    sysctl:
+      name: net.bridge.bridge-nf-call-iptables
+      value: 1
+      state: present
+
+  - name: join command 
+    shell:
+     cmd : sudo kubeadm init --pod-network-cidr=20.224.79.250/16  
+
+  
+  - name: create .kube directory
+    become: yes
+    become_user: azureuser
+    file:
+      path: $HOME/.kube
+      state: directory
+      mode: '0700' 
+     
+  
+  - name: copy admin.conf to user's kube config
+    become: yes
+    become_user: root
+    become_method: sudo
+    copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/azureuser/.kube/config
+        remote_src: yes
+        owner: azureuser
+        mode: '0740'
+  
+  
+  - name: install Pod network
+    become: yes
+    become_user: azureuser
+    shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+    args:
+      chdir: $HOME     
+  
+ 
+  
+  
+  - name: get join command
+    become: yes
+    become_user: azureuser
+    shell: kubeadm token create --print-join-command
+    register: join_command_raw
+
+  - name: set join command
+    become: yes
+    become_user: azureuser
+    set_fact:
+      join_command: "{{ join_command_raw.stdout_lines[0] }}"

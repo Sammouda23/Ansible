@@ -1,0 +1,12 @@
+---
+- hosts: Ansible-Server-worker2 
+  become: true
+  tasks:
+  
+
+  - name: join cluster	
+    become: yes
+    become_user: root
+    become_method: sudo
+    shell: kubeadm join 10.0.0.9:6443 --token rp0vfi.kvxre6ro5fhei95i --discovery-token-ca-cert-hash sha256:75f9e100ec5fe12c248a2580cfdd0d55717fe079caa5670797ed42aab277bf3e 
+

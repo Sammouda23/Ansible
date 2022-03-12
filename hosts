@@ -1,0 +1,14 @@
+[Ansible-Server-master]
+ Ansible-Server-master ansible_host=azureuser@20.224.79.250
+
+[Ansible-Server-worker]
+ Ansible-Server-worker1 ansible_host=azureuser@51.124.224.193
+ Ansible-Server-worker2 ansible_host=azureuser@20.229.99.10
+
+
+#[Ansible-Server-docker-target-worker]
+# Ansible-Server-docker-target-1 ansible_host=root@172.17.0.2
+#Ansible-Server-docker-target-2 ansible_host=root@172.17.0.3
+
+#[Localhost]
+#Ansible-Server-Localhost ansible_host=sammouda@192.168.1.7  
