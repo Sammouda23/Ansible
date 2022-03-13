@@ -2,9 +2,14 @@ pipeline {
     agent any
 
     stages {
+        stage('clone') {
+            steps {
+           git 'https://github.com/Sammouda23/Ansible.git'
+            }}
+            
         stage('Hello') {
             steps {
-                ansiblePlaybook disableHostKeyChecking: true, installation: 'ansible-c', inventory: 'hosts', playbook: 'worker.yml'
+             sh 'ansible-playbook -i hosts worker.yml'
             }
         }
     }
