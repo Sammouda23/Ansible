@@ -1,5 +1,5 @@
 ---
-- hosts: Ansible-Server-worker2 
+- hosts: Ansible-Server-worker
   become: true
   tasks:
   
